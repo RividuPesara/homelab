@@ -38,7 +38,8 @@ services:
       - HUB_URL=http://localhost:8090
       - KEY=${BESZEL_KEY}
       - TOKEN=${BESZEL_TOKEN}
-      - SENSORS=coretemp_package_id_0,coretemp_core_0,coretemp_core_1,amdgpu_edge
+      - SENSORS=coretemp_package_id_0,coretemp_core_0,coretemp_core_1
+      - SKIP_GPU=true
 
 networks:
   homelab:
