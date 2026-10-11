@@ -1,0 +1,30 @@
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    restart: unless-stopped
+    user: "${PUID}:${PGID}"
+    ports:
+      - "8096:8096"
+    volumes:
+      - ./config/jellyfin/config:/config
+      - ./config/jellyfin/cache:/cache
+      - /data/media:/data/media
+    networks: [homelab]
+
+  seanime:
+    image: umagistr/seanime:latest-rootless
+    container_name: seanime
+    restart: unless-stopped
+    environment:
+      - SEANIME_SERVER_HOST=0.0.0.0
+    ports:
+      - "43211:43211"
+    volumes:
+      - ./config/seanime:/home/seanime/.config/Seanime
+      - /data:/data
+    networks: [homelab]
+
+networks:
+  homelab:
+    external: true

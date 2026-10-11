@@ -1,0 +1,54 @@
+services:
+  adguardhome:
+    image: adguard/adguardhome:latest
+    container_name: adguardhome
+    restart: unless-stopped
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "80:80/tcp"
+      - "443:443/tcp"
+      - "3000:3000/tcp"
+    volumes:
+      - adguard_work:/opt/adguardhome/work
+      - adguard_conf:/opt/adguardhome/conf
+    networks: [homelab]
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: unless-stopped
+    ports:
+      - "9443:9443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    networks: [homelab]
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      - uptime_kuma:/app/data
+    networks: [homelab]
+
+volumes:
+  adguard_work:
+    external: true
+    name: homelab_adguardhome_work
+  adguard_conf:
+    external: true
+    name: homelab_adguardhome_conf
+  portainer_data:
+    external: true
+    name: homelab_portainer_data
+  uptime_kuma:
+    external: true
+    name: homelab_uptime-kuma
+
+networks:
+  homelab:
+    external: true
