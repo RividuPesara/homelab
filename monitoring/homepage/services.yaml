@@ -1,0 +1,35 @@
+- Media:
+    - Jellyfin:
+        icon: jellyfin.png
+        href: https://homelab.tail7d5f26.ts.net
+        server: local
+        container: jellyfin
+    - Seanime:
+        icon: mdi-television-play
+        href: https://homelab.tail7d5f26.ts.net:8443
+        server: local
+        container: seanime
+
+- Management:
+    - Portainer:
+        icon: portainer.png
+        href: https://homelab.tail7d5f26.ts.net:9443
+        server: local
+        container: portainer
+    - AdGuard Home:
+        icon: adguard-home.png
+        href: http://homelab.tail7d5f26.ts.net
+        server: local
+        container: adguardhome
+
+- Monitoring:
+    - Uptime Kuma:
+        icon: uptime-kuma.png
+        href: https://homelab.tail7d5f26.ts.net:10000
+        server: local
+        container: uptime-kuma
+    - Beszel:
+        icon: beszel.png
+        href: http://homelab.tail7d5f26.ts.net:8090
+        server: local
+        container: beszel

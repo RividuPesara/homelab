@@ -1,0 +1,24 @@
+[2026-10-11T20:10:30.083Z] info: kubernetes.yaml was copied to the config folder
+[2026-10-11T20:20:23.411Z] info: proxmox.yaml was copied to the config folder
+[2026-10-11T20:20:23.419Z] info: custom.css was copied to the config folder
+[2026-10-11T20:20:23.420Z] info: custom.js was copied to the config folder
+[2026-10-11T20:20:23.575Z] error: <service-helpers> Error getting services from Docker server 'local': Error: connect EACCES /var/run/docker.sock
+    at ignore-listed frames {
+  errno: -13,
+  code: 'EACCES',
+  syscall: 'connect',
+  address: '/var/run/docker.sock'
+}
+[2026-10-11T20:20:23.675Z] error: <dockerStatuses> Error: connect EACCES /var/run/docker.sock
+    at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1638:16)
+    at PipeConnectWrap.callbackTrampoline (node:internal/async_hooks:130:17)
+[2026-10-11T20:20:37.056Z] error: <dockerStatuses> Error: connect EACCES /var/run/docker.sock
+    at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1638:16)
+    at PipeConnectWrap.callbackTrampoline (node:internal/async_hooks:130:17)
+[2026-10-11T20:20:37.062Z] error: <service-helpers> Error getting services from Docker server 'local': Error: connect EACCES /var/run/docker.sock
+    at ignore-listed frames {
+  errno: -13,
+  code: 'EACCES',
+  syscall: 'connect',
+  address: '/var/run/docker.sock'
+}

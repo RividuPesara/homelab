@@ -1,0 +1,45 @@
+services:
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    restart: unless-stopped
+    ports:
+      - "3002:3000"
+    environment:
+      - HOMEPAGE_ALLOWED_HOSTS=192.168.1.6:3002,homelab.tail7d5f26.ts.net:3002
+    volumes:
+      - ./homepage:/app/config
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks: [homelab]
+
+  beszel:
+    image: henrygd/beszel:latest
+    container_name: beszel
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./config/beszel/hub:/beszel_data
+      - ./config/beszel/socket:/beszel_socket
+    networks: [homelab]
+
+  beszel-agent:
+    image: henrygd/beszel-agent:latest
+    container_name: beszel-agent
+    restart: unless-stopped
+    network_mode: host
+    profiles: [agent]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./config/beszel/agent:/var/lib/beszel-agent
+      - ./config/beszel/socket:/beszel_socket
+    environment:
+      - LISTEN=/beszel_socket/beszel.sock
+      - HUB_URL=http://localhost:8090
+      - KEY=${BESZEL_KEY}
+      - TOKEN=${BESZEL_TOKEN}
+      - SENSORS=coretemp_package_id_0,coretemp_core_0,coretemp_core_1,amdgpu_edge
+
+networks:
+  homelab:
+    external: true
