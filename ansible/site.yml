@@ -1,0 +1,67 @@
+- name: Set up the homelab server
+  hosts: homelab
+  become: true
+  vars:
+    user: pesara
+    homelab_dir: /home/pesara/homelab
+
+  tasks:
+    - name: Install basic packages
+      apt:
+        name: [git, curl, smartmontools, dnsutils]
+        state: present
+        update_cache: true
+
+    - name: Set timezone
+      command: timedatectl set-timezone Asia/Colombo
+      changed_when: false
+
+    # Only runs on a fresh install
+    - name: Install Docker
+      shell: curl -fsSL https://get.docker.com | sh
+      args:
+        creates: /usr/bin/docker
+
+    - name: Let my user run Docker
+      user:
+        name: "{{ user }}"
+        groups: docker
+        append: true
+
+    # Only runs on a fresh install
+    - name: Install Tailscale
+      shell: curl -fsSL https://tailscale.com/install.sh | sh
+      args:
+        creates: /usr/bin/tailscale
+
+    - name: Create the shared Docker network
+      shell: docker network inspect homelab >/dev/null 2>&1 || docker network create homelab
+      changed_when: false
+
+    - name: Create media folders
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ user }}"
+        group: "{{ user }}"
+      loop:
+        - /data/torrents/movies
+        - /data/torrents/tv
+        - /data/torrents/anime
+        - /data/media/movies
+        - /data/media/tv
+        - /data/media/anime
+
+    - name: Start core and media stacks
+      command: docker compose up -d
+      args:
+        chdir: "{{ homelab_dir }}/{{ item }}"
+      loop: [core, media]
+      changed_when: false
+
+    # Profile starts the Beszel agent too
+    - name: Start monitoring stack
+      command: docker compose --profile agent up -d
+      args:
+        chdir: "{{ homelab_dir }}/monitoring"
+      changed_when: false
