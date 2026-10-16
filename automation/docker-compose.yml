@@ -25,6 +25,7 @@ services:
     environment:
       - TZ=Asia/Colombo
       - GENERIC_TIMEZONE=Asia/Colombo
+      - WEBHOOK_URL=${WEBHOOK_URL}
       - N8N_SECURE_COOKIE=false
     volumes:
       - ./config/n8n:/home/node/.n8n

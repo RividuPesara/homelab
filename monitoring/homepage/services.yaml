@@ -18,7 +18,7 @@
         container: portainer
     - AdGuard Home:
         icon: adguard-home.png
-        href: http://homelab.tail7d5f26.ts.net
+        href: https://homelab.tail7d5f26.ts.net:3443
         server: local
         container: adguardhome
 
@@ -33,3 +33,15 @@
         href: http://homelab.tail7d5f26.ts.net:8090
         server: local
         container: beszel
+
+- Automation:
+    - n8n:
+        icon: n8n.png
+        href: http://homelab.tail7d5f26.ts.net:5678
+        server: local
+        container: n8n
+    - WAHA:
+        icon: mdi-whatsapp
+        href: http://homelab.tail7d5f26.ts.net:3003/dashboard
+        server: local
+        container: waha
