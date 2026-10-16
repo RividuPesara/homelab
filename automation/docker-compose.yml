@@ -1,0 +1,35 @@
+services:
+  waha:
+    image: devlikeapro/waha:latest
+    container_name: waha
+    restart: unless-stopped
+    ports:
+      - "3003:3000"
+    environment:
+      - WHATSAPP_DEFAULT_ENGINE=GOWS
+      - WAHA_API_KEY=${WAHA_API_KEY}
+      - WAHA_DASHBOARD_ENABLED=true
+      - WAHA_DASHBOARD_USERNAME=admin
+      - WAHA_DASHBOARD_PASSWORD=${WAHA_DASHBOARD_PASSWORD}
+      - TZ=Asia/Colombo
+    volumes:
+      - ./config/waha:/app/.sessions
+    networks: [homelab]
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - TZ=Asia/Colombo
+      - GENERIC_TIMEZONE=Asia/Colombo
+      - N8N_SECURE_COOKIE=false
+    volumes:
+      - ./config/n8n:/home/node/.n8n
+    networks: [homelab]
+
+networks:
+  homelab:
+    external: true
