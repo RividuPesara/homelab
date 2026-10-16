@@ -1,0 +1,419 @@
+{
+  "name": "Ad hunter",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 21
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "56d3bf43-e611-4bad-bc5d-d5ea2c3ede6d",
+      "name": "Nightly"
+    },
+    {
+      "parameters": {
+        "url": "http://adguardhome/control/querylog?limit=5000&response_status=processed",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "0253cc9f-049d-4e18-89c1-bf6a90b168fa",
+      "name": "Query log",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "RrFdlVEbXWvJLUjf",
+          "name": "AdGuard"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/ultimate.txt",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        0
+      ],
+      "id": "c446f61e-0af7-4dd0-9c97-813bd4f99806",
+      "name": "HaGeZi Ultimate"
+    },
+    {
+      "parameters": {
+        "jsCode": "const log = $('Query log').first().json.data || [];\nconst list = $('HaGeZi Ultimate').first().json.data || '';\nconst userRules = $('Current rules').first().json.user_rules || [];\n\nconst already = new Set();\nfor (const r of userRules) {\n  const m = r.match(/^(@@)?\\|\\|([^\\^]+)\\^/);\n  if (m) already.add(m[2].toLowerCase());\n}\n\nconst ultimate = new Set();\nfor (const line of list.split('\\n')) {\n  const m = line.match(/^\\|\\|([^\\^]+)\\^/);\n  if (m) ultimate.add(m[1]);\n}\nconst inUltimate = d => {\n  const p = d.split('.');\n  for (let i = 0; i < p.length - 1; i++) if (ultimate.has(p.slice(i).join('.'))) return true;\n  return false;\n};\n\nconst looksLikeAds = /(^|[.-])(ads?|adserv|track(er|ing)?|pixel|analytics|telemetry|metrics|beacon)([.-]|\\d|$)/i;\nconst skip = /(\\.ts\\.net|\\.internal|\\.local|\\.arpa|localhost)$/i;\nconst neverSuggest = /(^|\\.)(graph\\.facebook\\.com|history\\.google\\.com|whatsapp\\.(com|net)|googleapis\\.com|gstatic\\.com)$/i;\n\nconst since = Date.now() - 24 * 60 * 60 * 1000;\n\nconst found = new Map();\nfor (const e of log) {\n  if (new Date(e.time).getTime() < since) continue;\n  const d = (e.question?.name || '').toLowerCase().replace(/\\.$/, '');\n  if (!d || skip.test(d) || neverSuggest.test(d) || already.has(d) || found.has(d)) continue;\n  if (inUltimate(d)) found.set(d, 'HaGeZi Ultimate');\n  else if (looksLikeAds.test(d)) found.set(d, 'looks like ads');\n}\n\nconst domains = [...found.entries()].slice(0, 25).map(([domain, why]) => ({ domain, why }));\nreturn [{ json: {\n  count: domains.length,\n  domains,\n  list: domains.map(x => `\u2022 ${x.domain} (${x.why})`).join('\\n')\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        0
+      ],
+      "id": "f04477e9-1b3c-42df-99cc-0bc72dc09323",
+      "name": "Find ad domains"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "975f7ccc-7669-47dd-af3e-05719eae9b43",
+              "leftValue": "={{ $json.count }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1088,
+        0
+      ],
+      "id": "60c21eb6-a63d-4533-8741-f7ed2a117aa6",
+      "name": "Anything found?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://waha:3000/api/sendText",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "session",
+              "value": "default"
+            },
+            {
+              "name": "chatId",
+              "value": "YOUR_NUMBER@c.us"
+            },
+            {
+              "name": "=text",
+              "value": "=Ad hunter found {{ $json.count }} domains:\n{{ $json.list }}\n\nApprove all: {{ $execution.resumeUrl }}\n(Ignore to skip, the link expires in 24h)"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1344,
+        -176
+      ],
+      "id": "d4b13161-706e-4049-9a2a-23cef0fae0ca",
+      "name": "Ask on WhatsApp",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "np8yZHaZfMKYZTiF",
+          "name": "WAHA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "limitWaitTime": true,
+        "resumeAmount": 24,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1568,
+        -176
+      ],
+      "id": "81fe760a-48c4-4931-8054-83ed18d1ac11",
+      "name": "Wait for approval",
+      "webhookId": "fe9641dd-903a-4a2e-a37c-5d3481164f07"
+    },
+    {
+      "parameters": {
+        "url": "http://adguardhome/control/filtering/status",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1792,
+        -176
+      ],
+      "id": "b069ee99-ff09-4113-9d3c-23d8782447c2",
+      "name": "Get rules",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "RrFdlVEbXWvJLUjf",
+          "name": "AdGuard"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const current = $('Get rules').first().json.user_rules || [];\nconst domains = $('Find ad domains').first().json.domains;\n\nconst today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Colombo' });\n\nconst newRules = domains.map(x => `||${x.domain}^`).filter(r => !current.includes(r));\nconst rules = newRules.length ? [...current, `! added by n8n ${today}`, ...newRules] : current;\n\nreturn [{ json: { rules, added: newRules.length } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        -176
+      ],
+      "id": "ed8559aa-0354-4b85-ae4a-1160f48ebfa3",
+      "name": "Merge rules"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://adguardhome/control/filtering/set_rules",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ rules: $json.rules }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2240,
+        -176
+      ],
+      "id": "0370ec18-6af2-45c8-90d0-1cf45a5c8f37",
+      "name": "Save rules",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "RrFdlVEbXWvJLUjf",
+          "name": "AdGuard"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://waha:3000/api/sendText",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "session",
+              "value": "default"
+            },
+            {
+              "name": "chatId",
+              "value": "YOUR_NUMBER@c.us"
+            },
+            {
+              "name": "text",
+              "value": "=Added {{ $('Merge rules').first().json.added }} domains to AdGuard."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2464,
+        -176
+      ],
+      "id": "cbbb3c56-b038-4092-98b9-2d2a185c3591",
+      "name": "Confirm",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "np8yZHaZfMKYZTiF",
+          "name": "WAHA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "http://adguardhome/control/filtering/status",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        672,
+        0
+      ],
+      "id": "a055a6c9-df02-41f5-8db2-77cdcc76bc27",
+      "name": "Current rules",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "RrFdlVEbXWvJLUjf",
+          "name": "AdGuard"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Nightly": {
+      "main": [
+        [
+          {
+            "node": "Query log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query log": {
+      "main": [
+        [
+          {
+            "node": "HaGeZi Ultimate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HaGeZi Ultimate": {
+      "main": [
+        [
+          {
+            "node": "Current rules",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find ad domains": {
+      "main": [
+        [
+          {
+            "node": "Anything found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anything found?": {
+      "main": [
+        [
+          {
+            "node": "Ask on WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ask on WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Wait for approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for approval": {
+      "main": [
+        [
+          {
+            "node": "Get rules",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get rules": {
+      "main": [
+        [
+          {
+            "node": "Merge rules",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge rules": {
+      "main": [
+        [
+          {
+            "node": "Save rules",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save rules": {
+      "main": [
+        [
+          {
+            "node": "Confirm",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Current rules": {
+      "main": [
+        [
+          {
+            "node": "Find ad domains",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  }
+}

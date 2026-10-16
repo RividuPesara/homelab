@@ -1,0 +1,65 @@
+{
+  "name": "Server started report",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "server-started",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "efa89153-35fc-46a9-aefe-e8fa90555edf",
+      "name": "Webhook",
+      "webhookId": "c7719e3c-ad15-43a8-9271-341fdf0bd71a"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://waha:3000/api/sendText",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "7b2242abce32f023ef01303c26186a2d7751a5a8f8ed0449f28cceaa5bc32364"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"session\": \"default\",\n  \"chatId\": \"YOUR_NUMBER@c.us\",\n  \"text\": \"\ud83d\udfe2 Homelab is up\\nApps: {{ $json.body.apps_up }}/{{ $json.body.apps_total }} running{{ $json.body.down ? '\\\\nDown: ' + $json.body.down : '' }}\\nDisk free: {{ $json.body.disk_free }}\\nCPU: {{ $json.body.temp }}\u00b0C\\nHome IP: {{ $json.body.ip }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "5b6f999e-e8c4-465a-809a-6d73c54e6974",
+      "name": "HTTP Request"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  }
+}
