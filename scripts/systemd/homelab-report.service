@@ -1,0 +1,11 @@
+[Unit]
+Description=Send homelab startup report
+After=docker.service network-online.target tailscaled.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/homelab-report
+
+[Install]
+WantedBy=multi-user.target
