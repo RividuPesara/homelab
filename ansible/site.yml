@@ -65,3 +65,34 @@
       args:
         chdir: "{{ homelab_dir }}/monitoring"
       changed_when: false
+
+    # Turns the backlight off after 60s on the console
+    - name: Blank the screen when idle
+      lineinfile:
+        path: /etc/default/grub
+        regexp: '^GRUB_CMDLINE_LINUX_DEFAULT='
+        line: 'GRUB_CMDLINE_LINUX_DEFAULT="quiet consoleblank=60"'
+      notify: Update grub
+
+    - name: Install screen-idle script
+      copy:
+        src: "{{ playbook_dir }}/../scripts/screen-idle"
+        dest: /usr/local/bin/screen-idle
+        mode: "0755"
+
+    - name: Install screen-idle service
+      copy:
+        src: "{{ playbook_dir }}/../scripts/screen-idle.service"
+        dest: /etc/systemd/system/screen-idle.service
+        mode: "0644"
+
+    - name: Enable screen-idle service
+      systemd:
+        name: screen-idle.service
+        daemon_reload: true
+        enabled: true
+        state: started
+
+  handlers:
+    - name: Update grub
+      command: update-grub
