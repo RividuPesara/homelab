@@ -1,0 +1,16 @@
+#!/bin/sh
+B=/sys/class/backlight/intel_backlight
+MAX=$(cat $B/max_brightness)
+state=on
+while true; do
+  # last keyboard use on the laptop screen
+  a=$(stat -c %X /dev/tty1); m=$(stat -c %Y /dev/tty1)
+  last=$(( a > m ? a : m ))
+  idle=$(( $(date +%s) - last ))
+  if [ $idle -ge 60 ] && [ $state = on ]; then
+    echo 0 > $B/brightness; state=off
+  elif [ $idle -lt 60 ] && [ $state = off ]; then
+    echo $MAX > $B/brightness; state=on
+  fi
+  sleep 2
+done

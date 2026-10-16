@@ -82,7 +82,7 @@
 
     - name: Install screen-idle service
       copy:
-        src: "{{ playbook_dir }}/../scripts/screen-idle.service"
+        src: "{{ playbook_dir }}/../scripts/systemd/screen-idle.service"
         dest: /etc/systemd/system/screen-idle.service
         mode: "0644"
 

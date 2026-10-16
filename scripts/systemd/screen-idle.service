@@ -1,0 +1,9 @@
+[Unit]
+Description=Turn off laptop backlight after 1 minute idle
+
+[Service]
+ExecStart=/usr/local/bin/screen-idle
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
